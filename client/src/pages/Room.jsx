@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowRightEndOnRectangleIcon,
   ChatBubbleLeftRightIcon,
@@ -7,13 +9,26 @@ import {
   UserIcon,
 } from "@heroicons/react/24/solid";
 
-const Room = ({ username, room }) => {
+const Room = ({ username, room, socket }) => {
+  const navigate = useNavigate();
   const [roomUsers, setRoomUsers] = useState(["user1", "user2", "user3"]);
-  const [receivedMessages, setReceivedMessages] = useState([
-    "user1",
-    "user2",
-    "user3",
-  ]);
+  const [receivedMessages, setReceivedMessages] = useState([]);
+
+  useEffect(
+    (_) => {
+      socket.on("message", (data) => {
+        setReceivedMessages((prev) => [...prev, data]);
+      });
+
+      return () => socket.disconnect();
+    },
+    [socket]
+  );
+
+  const leaveRoom = () => {
+    navigate("/");
+  };
+
   return (
     <section className="flex gap-3 h-screen">
       {/* left side */}
@@ -43,6 +58,7 @@ const Room = ({ username, room }) => {
         <button
           type="button"
           className="absolute bottom-0 p-2.5 flex gap-1 w-full mb-2 items-center text-lg"
+          onClick={leaveRoom}
         >
           <ArrowRightEndOnRectangleIcon width={30} />
           Leave Room
@@ -58,10 +74,12 @@ const Room = ({ username, room }) => {
               className="text-white bg-blue-500 px-3 
               py-2 mb-3 w-3/4 rounded-br-3xl rounded-tl-3xl"
             >
-              <p className="text-sm font-medium font-mono">from bot</p>
-              <p className="text-lg font-medium">{msg}</p>
+              <p className="text-sm font-medium font-mono">
+                from {msg.username}
+              </p>
+              <p className="text-lg font-medium">{msg.message}</p>
               <p className="text-sm font-mono font-medium text-right">
-                less than a minute
+                {formatDistanceToNow(new Date(msg.sent_at))}
               </p>
             </div>
           ))}
