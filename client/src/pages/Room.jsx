@@ -17,6 +17,19 @@ const Room = ({ username, room, socket }) => {
 
   const boxDivRef = useRef(null);
 
+  const getOldMessage = async () => {
+    const response = await fetch(`${import.meta.env.VITE_SERVER}/chat/${room}`);
+    if (response.status === 403) {
+      return navigate("/");
+    }
+    const data = await response.json();
+    setReceivedMessages((prev) => [...prev, ...data]);
+  };
+
+  useEffect((_) => {
+    getOldMessage();
+  }, []);
+
   useEffect(
     (_) => {
       // send join user info to server
@@ -98,7 +111,7 @@ const Room = ({ username, room, socket }) => {
         </div>
         <button
           type="button"
-          className="absolute bottom-0 p-2.5 flex gap-1 w-full mb-2 items-center text-lg"
+          className="absolute bottom-0 p-2.5 flex gap-1 w-full items-enter mx-2 mb-2 text-lg"
           onClick={leaveRoom}
         >
           <ArrowRightEndOnRectangleIcon width={30} />
@@ -108,7 +121,7 @@ const Room = ({ username, room, socket }) => {
 
       {/* right side */}
       <div className="w-full pt-5 relative">
-        <div className="h-[34rem] overflow-y-auto" ref={boxDivRef}>
+        <div className="h-[33rem] overflow-y-auto" ref={boxDivRef}>
           {receivedMessages.map((msg, i) => (
             <div
               key={i}
@@ -129,7 +142,7 @@ const Room = ({ username, room, socket }) => {
             </div>
           ))}
         </div>
-        <div className="absolute buttom-0 my-2 py-2.5 flex items-end w-full px-2">
+        <div className="my-2 py-2.5 flex items-end px-2 w-full absolute bottom-0">
           <input
             type="text"
             placeholder="message ..."
