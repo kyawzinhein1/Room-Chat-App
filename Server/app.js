@@ -1,11 +1,33 @@
 const express = require("express");
 const socketIO = require("socket.io");
 const cors = require("cors");
+const mongoose = require("mongoose");
+require("dotenv").config();
 
 const formatMessage = require("./utils/formatMSG");
 
+const {
+  saveUser,
+  getDisconnectUser,
+  getSameRoomUsers,
+} = require("./utils/user");
+
+// import model
+const Message = require("./models/Message");
+
+// import controllers
+const messageController = require("./controllers/message");
+
 const app = express();
 app.use(cors());
+
+// routes define
+app.get("/chat/:roomName", messageController.getOldMessage);
+
+// connect with mongoose
+mongoose.connect(process.env.MONGO_URL).then((_) => {
+  console.log("connected to database");
+});
 
 const server = app.listen(4000, (_) => {
   console.log("server is running at port : 4000");
@@ -14,26 +36,6 @@ const server = app.listen(4000, (_) => {
 const io = socketIO(server, {
   cors: "*",
 });
-
-const users = [];
-
-const saveUser = (id, username, room) => {
-  const user = { id, username, room };
-
-  users.push(user);
-  return user;
-};
-
-const getDisconnectUser = (id) => {
-  const index = users.findIndex((user) => user.id === id);
-  if (index !== -1) {
-    return users.splice(index, 1)[0];
-  }
-};
-
-const getSameRoomUsers = (room) => {
-  return users.filter((user) => user.room === room);
-};
 
 // Run when client-server connected
 io.on("connection", (socket) => {
@@ -59,9 +61,15 @@ io.on("connection", (socket) => {
     socket.on("message_send", (data) => {
       // send back message to client
       io.to(user.room).emit("message", formatMessage(user.username, data));
+      // store message in database
+      Message.create({
+        username: user.username,
+        message: data,
+        room: user.room,
+      });
     });
 
-    // send room users
+    // send room users on joined room
     io.to(user.room).emit("room_users", getSameRoomUsers(user.room));
   });
 
@@ -74,6 +82,8 @@ io.on("connection", (socket) => {
         "message",
         formatMessage(BOT, `${user.username} left the room.`)
       );
+      // update room users when disconnect
+      io.to(user.room).emit("room_users", getSameRoomUsers(user.room));
     }
   });
 });
