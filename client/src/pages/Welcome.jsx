@@ -14,7 +14,7 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
     ) {
       const socket = io.connect("http://localhost:4000");
       setSocket(socket);
-      
+
       navigate("/chat", { replace: true });
     } else {
       alert("Fail all user info.");
@@ -22,43 +22,34 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
   };
 
   return (
-    <section className="w-full h-screen flex items-center justify-center">
-      <div className="w-50 bg-gray-200 p-10 rounded-lg">
-        <h2 className="text-4xl font-bold text-center text-blue-500 mb-6">
-          Room
+    <section className="w-full h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600">
+      <div className="w-[65%] md:w-1/4 bg-white shadow-lg p-8 rounded-lg transform transition-transform">
+        <h2 className="text-3xl font-bold text-center text-blue-600 mb-8">
+          Join a Chat Room
         </h2>
-        <form onSubmit={joinRoom}>
+        <form onSubmit={joinRoom} className="space-y-5">
           <div className="mb-3">
             <input
               type="text"
-              placeholder="username ..."
-              id="username"
-              className="border-2 border-blue-500 rounded-lg outline-none p-2.5 w-full text-base font-medium"
-              onChange={(e) => {
-                setUsername(e.target.value);
-                // username = e.target.value;
-                // setUsername = username;
-              }}
+              placeholder="Enter your username"
+              className="border-2 border-gray-300 rounded-lg w-full p-3 text-gray-700 focus:outline-none focus:border-indigo-500 transition"
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           <div className="mb-3">
             <select
-              name="room"
-              id="room"
-              className="border-2 border-blue-500 text-base font-medium rounded-lg w-full focus:ring-blue-500 block p-2.5 text-center"
-              onChange={(e) => {
-                setRoom(e.target.value);
-                // room = e.target.value;
-                // setRoom = room;
-              }}
+              className="border-2 border-gray-300 rounded-lg w-full p-3 text-gray-700 focus:outline-none focus:border-indigo-500 transition"
+              onChange={(e) => setRoom(e.target.value)}
             >
-              <option value="select-room">-- Select Room --</option>
+              <option value="select-room" disabled>
+                -- Select Room --
+              </option>
               <option value="javascript">Javascript</option>
               <option value="node">Node</option>
               <option value="React">React</option>
             </select>
           </div>
-          <button className="text-center text-base text-white bg-blue-500 py-2.5 rounded-lg font-medium w-full">
+          <button className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition font-semibold">
             Join Room
           </button>
         </form>

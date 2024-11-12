@@ -1,7 +1,7 @@
 const Message = require("../models/Message");
 const OPENED_ROOMS = ["react", "node", "javascript"];
 
-exports.getOldMessage = (req, res, next) => {
+exports.getOldMessage = (req, res) => {
   const { roomName } = req.params;
   if (OPENED_ROOMS.includes(roomName)) {
     Message.find({ room: roomName }).select("username message sent_at").then((message) => {

@@ -7,6 +7,8 @@ import {
   PaperAirplaneIcon,
   UserGroupIcon,
   UserIcon,
+  Bars3Icon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 
 const Room = ({ username, room, socket }) => {
@@ -14,6 +16,7 @@ const Room = ({ username, room, socket }) => {
   const [roomUsers, setRoomUsers] = useState([]);
   const [receivedMessages, setReceivedMessages] = useState([]);
   const [message, setMessage] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const boxDivRef = useRef(null);
 
@@ -26,42 +29,23 @@ const Room = ({ username, room, socket }) => {
     setReceivedMessages((prev) => [...prev, ...data]);
   };
 
-  useEffect((_) => {
+  useEffect(() => {
     getOldMessage();
   }, []);
 
-  useEffect(
-    (_) => {
-      // send join user info to server
-      socket.emit("joined-room", { username, room });
+  useEffect(() => {
+    socket.emit("joined-room", { username, room });
 
-      // get message from server
-      socket.on("message", (data) => {
-        setReceivedMessages((prev) => [...prev, data]);
-      });
+    socket.on("message", (data) => {
+      setReceivedMessages((prev) => [...prev, data]);
+    });
 
-      // get room users from server
-      socket.on("room_users", (data) => {
-        let prevRoomUsers = [...roomUsers];
-        data.forEach((user) => {
-          const index = prevRoomUsers.findIndex(
-            (prevUser) => prevUser.id === user.id
-          );
+    socket.on("room_users", (data) => {
+      setRoomUsers(data);
+    });
 
-          if (index !== -1) {
-            prevRoomUsers[index] = { ...prevRoomUsers, ...data };
-          } else {
-            prevRoomUsers.push(user);
-          }
-
-          setRoomUsers(prevRoomUsers);
-        });
-      });
-
-      return () => socket.disconnect();
-    },
-    [socket]
-  );
+    return () => socket.disconnect();
+  }, [socket]);
 
   const sendMessage = () => {
     if (message.trim().length > 0) {
@@ -74,89 +58,119 @@ const Room = ({ username, room, socket }) => {
     navigate("/");
   };
 
-  useEffect(
-    (_) => {
-      if (boxDivRef.current) {
-        boxDivRef.current.scrollTop = boxDivRef.current.scrollHeight;
-      }
-    },
-    [receivedMessages]
-  );
+  useEffect(() => {
+    if (boxDivRef.current) {
+      boxDivRef.current.scrollTop = boxDivRef.current.scrollHeight;
+    }
+  }, [receivedMessages]);
 
   return (
-    <section className="flex gap-3 h-screen">
-      {/* left side */}
-      <div className="w-1/3 bg-blue-600 text-white font-medium relative">
-        <p className="text-xl font-bold text-center mt-5">Room.io</p>
-        <div className="mt-8 ps-2">
-          <p className="text-lg flex items-end gap-1">
-            <ChatBubbleLeftRightIcon width={30} />
-            Room Name
-          </p>
-          <p className="bg-white text-blue-500 ps-5 py-2 rounded-tl-full rounded-bl-full my-2">
+    <section className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-blue-700 text-white transform transition-transform duration-300 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:relative md:translate-x-0 md:w-1/3 md:block`}
+      >
+        {/* Close Button */}
+        <button
+          className="absolute top-4 left-4 text-white p-1 rounded-full hover:bg-blue-600 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        >
+          <XMarkIcon width={24} />
+        </button>
+
+        <p className="text-2xl font-extrabold text-center mt-10 md:mt-5">
+          Room.io
+        </p>
+        <div className="mt-8 px-4">
+          <div className="text-lg flex items-center gap-2 mb-4">
+            <ChatBubbleLeftRightIcon width={28} />
+            <span>Room Name</span>
+          </div>
+          <p className="bg-white text-blue-600 px-4 py-2 rounded-tl-lg rounded-bl-lg mb-6 font-semibold text-lg">
             {room}
           </p>
-        </div>
-        <div className="mt-4 ps-2">
-          <p className="flex items-center gap-1 text-lg mb-3">
-            <UserGroupIcon width={30} />
-            Users
-          </p>
-          {roomUsers.map((user, i) => (
-            <p key={i} className="flex items-end gap-1 text-sm my-2">
-              <UserIcon width={23} />
-              {user.username === username ? "You" : user.username}
-            </p>
-          ))}
+          <div className="text-lg flex items-center gap-2 mb-3">
+            <UserGroupIcon width={28} />
+            <span>Users</span>
+          </div>
+          <div className="space-y-2">
+            {roomUsers.map((user, i) => (
+              <p
+                key={i}
+                className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg ${
+                  user.username === username ? "bg-blue-500" : "bg-blue-400"
+                }`}
+              >
+                <UserIcon width={20} />
+                {user.username === username ? "You" : user.username}
+              </p>
+            ))}
+          </div>
         </div>
         <button
           type="button"
-          className="absolute bottom-0 p-2.5 flex gap-1 w-full items-enter mx-2 mb-2 text-lg"
+          className="mt-4 md:absolute md:bottom-0 p-3 w-full flex items-center gap-2 justify-center bg-blue-800 hover:bg-blue-900 rounded-lg transition-all duration-200 text-lg"
           onClick={leaveRoom}
         >
-          <ArrowRightEndOnRectangleIcon width={30} />
+          <ArrowRightEndOnRectangleIcon width={24} />
           Leave Room
         </button>
       </div>
 
-      {/* right side */}
-      <div className="w-full pt-5 relative">
-        <div className="h-[33rem] overflow-y-auto" ref={boxDivRef}>
+      {/* Chat Section */}
+      <div className="flex flex-col w-full pt-5 px-3 md:px-5 relative">
+        {/* Mobile Toggle Button fixed in chat section */}
+        {!isSidebarOpen && (
+          <button
+            className="absolute top-4 left-4 p-2 bg-blue-600 bg-opacity-80 text-white rounded-full shadow-lg hover:bg-blue-600 md:hidden"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <Bars3Icon width={22} />
+          </button>
+        )}
+
+        {/* Messages */}
+        <div
+          className="flex-grow overflow-y-auto p-4 space-y-3 bg-white rounded-lg shadow-lg mb-4"
+          ref={boxDivRef}
+        >
           {receivedMessages.map((msg, i) => (
             <div
               key={i}
-              className={`text-white bg-blue-500 px-3 
-              py-2 mb-3 w-3/5 ${
+              className={`p-4 rounded-lg w-4/5 md:w-3/5 ${
                 msg.username === username
-                  ? "bg-green-500 ml-auto mx-3 rounded-l-xl rounded-tr-xl"
-                  : "bg-blue-500 rounded-r-xl rounded-tl-xl"
+                  ? "bg-green-100 ml-auto text-right"
+                  : "bg-blue-100 text-left"
               }`}
             >
-              <p className="text-sm font-medium font-mono">
-                from {msg.username === username ? "me" : msg.username}
+              <p className="text-xs font-semibold">
+                {msg.username === username ? "You" : msg.username}
               </p>
-              <p className="text-lg font-medium">{msg.message}</p>
-              <p className="text-sm font-mono font-medium text-right">
-                {formatDistanceToNow(new Date(msg.sent_at))}
+              <p className="text-sm">{msg.message}</p>
+              <p className="text-xs text-gray-500">
+                {formatDistanceToNow(new Date(msg.sent_at))} ago
               </p>
             </div>
           ))}
         </div>
-        <div className="my-2 py-2.5 flex items-end px-2 w-full absolute bottom-0">
+
+        {/* Input and Send Button */}
+        <div className="flex items-center px-3 py-3 bg-gray-100 rounded-lg shadow-lg">
           <input
             type="text"
-            placeholder="message ..."
-            className="w-full outline-none border-b text-lg me-2"
+            placeholder="Type your message..."
+            className="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={message}
-            onChange={(e) => {
-              setMessage(e.target.value);
-            }}
+            onChange={(e) => setMessage(e.target.value)}
           />
-          <button type="button" onClick={sendMessage}>
-            <PaperAirplaneIcon
-              width={30}
-              className="hover:text-blue-500 hover:-rotate-45 duration-200"
-            />
+          <button
+            type="button"
+            onClick={sendMessage}
+            className="ml-2 p-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-transform transform hover:-rotate-45 duration-200"
+          >
+            <PaperAirplaneIcon width={24} />
           </button>
         </div>
       </div>
