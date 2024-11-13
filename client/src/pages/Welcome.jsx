@@ -15,7 +15,7 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
       const socket = io.connect("http://localhost:4000");
       setSocket(socket);
 
-      navigate("/chat", { replace: true });
+      navigate("/chat");
     } else {
       alert("Fail all user info.");
     }
@@ -23,9 +23,9 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
 
   return (
     <section className="w-full h-screen flex items-center justify-center bg-gradient-to-r from-blue-500 to-indigo-600">
-      <div className="w-[65%] md:w-1/4 bg-white shadow-lg p-8 rounded-lg transform transition-transform">
+      <div className="w-9/12 md:w-1/3 bg-white shadow-lg p-8 rounded-lg">
         <h2 className="text-3xl font-bold text-center text-blue-600 mb-8">
-          Join a Chat Room
+          TAHC
         </h2>
         <form onSubmit={joinRoom} className="space-y-5">
           <div className="mb-3">
@@ -44,9 +44,9 @@ const Welcome = ({ username, setUsername, room, setRoom, setSocket }) => {
               <option value="select-room" disabled>
                 -- Select Room --
               </option>
-              <option value="javascript">Javascript</option>
               <option value="node">Node</option>
-              <option value="React">React</option>
+              <option value="react">React</option>
+              <option value="javascript">Javascript</option>
             </select>
           </div>
           <button className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition font-semibold">
